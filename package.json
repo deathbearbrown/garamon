@@ -1,0 +1,42 @@
+{
+  "name": "garamon",
+  "version": "1.0.0",
+  "description": "3D Data Vis with three.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deathbearbrown/garamon.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/deathbearbrown/garamon/issues"
+  },
+  "homepage": "https://github.com/deathbearbrown/garamon#readme",
+  "dependencies": {
+    "jquery": "^2.1.4",
+    "three": "^0.71.0",
+    "browserify-shim": "^3.8.6"
+  },
+  "browser": {
+    "jquery": "./node_modules/jquery/dist/jquery.min.js",
+    "three": "./node_modules/three/three.js",
+    "Detector": "./js/vendor/Detector.js",
+    "GridHelper": "./js/vendor/GridHelper.js",
+    "OrbitControls": "./js/vendor/OrbitControls.js",
+    "Stats": "./js/vendor/Stats.js"
+  },
+  "browserify-shim": {
+    "jquery": "$",
+    "three": "global:THREE",
+    "Detector": { 
+    	"depends": [ "three:THREE" ]
+    },
+    "Stats": { 
+    	"depends": [ "three:THREE" ]
+    }
+  }
+}
