@@ -5,11 +5,7 @@
 
 
 Dev environment:
-Run `bower install`
-
-Have Browserify installed:
-Run `browserify ./src/main.js -o ./dist/main.js`
-
+Run `npm install`
 
 
 

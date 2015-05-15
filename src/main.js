@@ -1,9 +1,3 @@
-var $ = require('jquery');
-var THREE = require('three');
-var Detector = require('Detector');
-var Stats = require('Stats');
-
-
 if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
 var container, stats;
@@ -15,6 +9,7 @@ var mesh, group1, group2, group3, light;
 var mouseX = 0, mouseY = 0;
 
 var windowWidth, windowHeight;
+
 
 var views = [
 	{
@@ -65,9 +60,24 @@ var views = [
 ];
 
 init();
-animate();
+//animate();
 
 function init() {
+
+
+	var shapes, geom, mat, mesh;
+
+	shapes = THREE.FontUtils.generateShapes( "Hello world", {
+		font: "helvetiker",
+		weight: "regular",
+	  size: 10
+	} );
+	geom = new THREE.ShapeGeometry( shapes );
+	mat = new THREE.MeshBasicMaterial();
+	mesh = new THREE.Mesh( geom, mat );
+	scene.add(mesh);
+
+
 
 	container = document.getElementById( 'container' );
 
