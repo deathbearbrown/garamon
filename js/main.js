@@ -22,8 +22,11 @@ var data = {
 };
 
 
+// SET THIS SHIT UP
+	init();
+	render();
+
 function labelAxis(labelAxis){
-	var label = new THREE.CSS3DObject();
   var axis = {
     x : 0,
     y : 0,
@@ -46,28 +49,28 @@ function labelAxis(labelAxis){
         if (labelAxis !== "y"){
           object.rotation.x = -90*Math.PI/180;
         } 
-        if (labelAxis == "z" || labelAxis == "y"){
+        if (labelAxis == "z"){
           object.position.x = -50;
         }
-
+				if(labelAxis == "y"){
+					 object.position.x = 1150;
+				}
         if (labelAxis == "x"){
           object.rotation.z = -270*Math.PI/180;
           object.position.z = -50;
         }
 
-        label.add( object );
+        cssScene.add( object );
 
         axis[labelAxis]+=separator;
 
   }
-  return label;
+
 
 }
 
-
-
-function createGrids(grid){
-  /* GRIDS*/
+function newCreateGrid(grid){
+	  /* GRIDS*/
 
 // Grid
 
@@ -141,44 +144,48 @@ function createGrids(grid){
 		grid.add(xgrid);
 		grid.add(ygrid);
 
-   // grid.add(mesh2);
-  // //GREEN
-  // var gridXZ = new THREE.GridHelper(500, (Math.ceil(500/data.labels.x.length))*2);
-  // gridXZ.setColors( new THREE.Color(0x19C37F), new THREE.Color(0x19C37F) );
-  // gridXZ.position.set( windowWidth,0,500 );
-  // grid.add(gridXZ);
+}
+
+function createGrids(){
+  var size = 500;
+  //GREEN
+  var gridXZ = new THREE.GridHelper(size, (Math.ceil(size / data.labels.x.length ))*2);
+  gridXZ.setColors( new THREE.Color(0x19C37F), new THREE.Color(0x19C37F) );
+  gridXZ.position.set( -size, -size/2, size );
+  glScene.add(gridXZ);
 
 
-  // //BLUE
-  // var gridXY = new THREE.GridHelper(500, (Math.ceil(windowHeight/data.labels.y.length))*2);
-  // gridXY.position.set( windowWidth,windowHeight,0 );
-  // gridXY.rotation.x = Math.PI/2;
-  // gridXY.setColors( new THREE.Color(0x1FC7FF), new THREE.Color(0x1FC7FF) );
-  // grid.add(gridXY);
+  //BLUE
+  var gridXY = new THREE.GridHelper(size, (Math.ceil(size / data.labels.y.length))*2);
+  gridXY.position.set( -size, size, -size/2 );
+  gridXY.rotation.x = Math.PI/2;
+  gridXY.setColors( new THREE.Color(0x1FC7FF), new THREE.Color(0x1FC7FF) );
+	glScene.add(gridXY);
 
-  // //PINK
-  // var gridYZ = new THREE.GridHelper(500, (Math.ceil(windowWidth/data.labels.z.length))*2);
-  // gridYZ.position.set( 0,windowHeight,500 );
-  // gridYZ.rotation.z = Math.PI/2;
-  // gridYZ.setColors( new THREE.Color(0xDD006C), new THREE.Color(0xDD006C) );
-  // grid.add(gridYZ);
+  //PINK
+  var gridYZ = new THREE.GridHelper(size, (Math.ceil(size / data.labels.z.length))*2);
+  gridYZ.position.set( -size/2, size, -size);
+  gridYZ.rotation.z = Math.PI/2;
+  gridYZ.setColors( new THREE.Color(0xDD006C), new THREE.Color(0xDD006C) );
+  glScene.add(gridYZ);
   
 }
 
 
 function gridInit(){
 	var grid = new THREE.Object3D();
-	
-	createGrids(grid);
-	
-	glScene.add(grid);
+	newCreateGrid(grid);
 
-	// var XLabel = labelAxis("x");
-	// var YLabel = labelAxis("y");
-	// var ZLabel = labelAxis("z");
-	// 	cssScene.add(XLabel);
-	// 	cssScene.add(YLabel);
-	// 	cssScene.add(XLabel);
+	grid.position.x= 500;
+	glScene.add(grid);
+	
+	//createGrids();
+	
+
+
+	// labelAxis("x");
+	// labelAxis("y");
+	// labelAxis("z");
 
 };
 
@@ -187,10 +194,18 @@ function init() {
 
   container = document.getElementById( 'container' );
 
-  camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, .1, 30000 );
-  camera.position.set( 2000, 1000, 2000 );
 
-  controls = new THREE.TrackballControls( camera );
+//----------------------------------------------------------------------------
+//   Set up camera
+//____________________________________________________________________________
+
+	camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 30000 );
+	camera.position.z = 500;
+
+	controls = new THREE.OrbitControls( camera );
+	controls.damping = 0.2;
+	controls.addEventListener( 'change', render );
+
 
 
 //----------------------------------------------------------------------------
@@ -224,7 +239,11 @@ function init() {
 	gridInit();
 		
 
+  geometry = new THREE.BoxGeometry( 200, 200, 200 );
+  material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
 
+  mesh = new THREE.Mesh( geometry, material );
+  glScene.add( mesh );
 
 //----------------------------------------------------------------------------
 //    SET UP RENDERERS
@@ -256,25 +275,49 @@ function init() {
   // container.appendChild( stats.domElement );
 
 
+
+	// set up window resize listener 
+	window.addEventListener( 'resize', onWindowResize, false );
+	animate();
 }
 
 
+
+//----------------------------------------------------------------------------
+//	Animate
+//----------------------------------------------------------------------------
 
 function animate() {
 
-  requestAnimationFrame( animate );
+	requestAnimationFrame(animate);
+	controls.update();
 
-  controls.update();
+}
 
-  cssRenderer.render( cssScene, camera );
-  glRenderer.render( glScene, camera );
+function render() {
+
+	cssRenderer.render( cssScene, camera );
+	glRenderer.render( glScene, camera );
+	//stats.update();
+
 }
 
 
+//----------------------------------------------------------------------------
+// ON RESIZE
+//----------------------------------------------------------------------------
+function onWindowResize() {
 
-// SET THIS SHIT UP
-init();
-animate();
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+
+	glRenderer.setSize( window.innerWidth, window.innerHeight );
+	cssRenderer.setSize( window.innerWidth, window.innerHeight );
+
+	render();
+
+}
+
 
 //----------------------------------------------------------------------------
 //    Camera controls
@@ -283,26 +326,25 @@ animate();
   $(".buttons").bind('click',function(){ 
   	if ($(this).attr('id')=="camera-1"){
   		console.log("camera one");
-  		camera.position.set(0,0, 2000 );
-
-			camera.rotation.x = Math.PI / 2;
+			camera.rotation.x = - Math.PI / 2;
 			camera.rotation.y = 0;
 			camera.rotation.z = 0;
+
   	}
 
 		if ($(this).attr('id')=="camera-2"){
 			console.log("camera two");
-			camera.position.set( 0, 2000, 0 );
+			camera.position.x = 100;
 		}
 
 		if ($(this).attr('id')=="camera-3"){
   		console.log("camera three");
-  		camera.position.set( 0, 1000, 2000 );
+			camera.position.x = 500;
   	}
 
   	if ($(this).attr('id')=="camera-4"){
   		console.log("camera four");
-  		camera.position.set( 2000, 1000, 2000 );
+			camera.position.x = 700;
   	}
 
   });
