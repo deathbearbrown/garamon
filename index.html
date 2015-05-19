@@ -22,10 +22,42 @@
 				color: #000000;
 			}
 
+			.buttons{
+				border: 1px solid;
+				display: inline-block;
+				margin-right:5px;
+				cursor: pointer;
+				padding: 10px 20px;
+				background-color:#fff;
+			}
+
+			#top {
+				position: absolute;
+				top:0;
+				left:0;
+				z-index: 10000000;
+				padding:10px;
+			}
+
+			#container {
+				z-index: 0;
+			}
+			canvas{
+				z-index: 0;
+			}
+
 		</style>
 </head>
 <body>
+
 <div id="container"></div>
+
+<div id="top">
+  <div class="buttons" id="camera-1">One</div>
+  <div class="buttons" id="camera-2">Two</div>
+  <div class="buttons" id="camera-3">Thee</div>
+  <div class="buttons" id="camera-4">Four</div>
+</div>
 
 <script src="/bower_components/jquery/dist/jquery.min.js"></script>
 <script src="/bower_components/three.js/three.js"></script>
