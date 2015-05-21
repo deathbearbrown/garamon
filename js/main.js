@@ -6,186 +6,168 @@ var container, stats;
 var views, glScene, glRenderer, camera, cssrenderer;
 var cssScene, cssRenderer;
 
-var mesh, group1, group2, group3, light;
+var light;
 
 var mouseX = 0, mouseY = 0;
 
-var windowWidth, windowHeight;
+var windowWidth = window.innerWidth, 
+		windowHeight = window.innerHeight;
+
+var realData;
+
+var colors = ["#eef4f8","#ddecf4","#cce5f0","#bcddec","#aed5e7","#a0cde2","#94c5dc","#89bcd6","#7eb4d0","#74abc9","#6aa2c2","#619abb","#5892b4","#4f8aad","#4781a6","#3f799f","#3a7195","#35688c","#326082","#2f5877","#2c506c","#243d52"];
 
 var data = {
   labels: {
-    x: ["1-month","3-month","6-month","1-year","2-year","3-year","5-year","7-year","10-year", "20-year","30-year"],
-    z: ["\'05","\'06","\'07","\'08","\'09","\'10","\'11","\'12","\'13","\'14","\'15"],
-    y: ["2%", "4%", "6%", "8%"]
+  	x: ["2%", "4%", "6%", "8%"],
+    y: ["\'06","\'07","\'08","\'09","\'10","\'11","\'12","\'13","\'14","\'15"],
+    z: ["1-month","3-month","6-month","1-year","2-year","3-year","5-year","7-year","10-year", "20-year","30-year"]
   },
   us:[48,83,163,184,302,303,549,550,663,729,730, 849,858,890,973,1001,1063,1087,1130,1213,1254,1436,1586,1629,1630,1672,1768,1821,1852,1905,1951,1985,1986,2082,2145,2215,2216,2247,2290,2293,2372,2373,2404,2457,2590,2595,2598,2684,2716,2717,2785,2856,2878,2881,2992,2998,3062,3093,3203,3204,3229,3257,3258,3306,3419,3420,3467,3480,3503,3593,3613,3694,3731,3809,3839,3902,3903,3964,4092,4124,4205,4270,4323,4364,4449,4450,4451,4499,4536,4616,4617,4790,4791,4861,4863,4904,4905,4958,5003,5004,5067,5068,5178,5243,5251,5280,5323,5380,5400,5461,5462,5557,5558,5663,5683,5684,5711,5801,5882,5925,5952,6004,6067,6068,6119,6149,6184,6218,6248,6298,6299]
 };
 
-
+$.getJSON( "../2005-2015.json", function( data ) {
+	realData = data;
 // SET THIS SHIT UP
 	init();
 	render();
+});
 
-function labelAxis(labelAxis){
-  var axis = {
-    x : 0,
-    y : 0,
-    z : 0
-  },
-  separator = (Math.ceil((500/data.labels[labelAxis].length))*2);
+var graphDimensions = {
+	w:1000,
+	d:2405
+};
 
-  axis[labelAxis] = separator;
 
-  for ( var i = 0; i < data.labels[labelAxis].length; i ++ ) {
+function labelAxis(width, data, title){
+
+  var separator = 2*width/data.length,
+			z = separator;
+
+	var dobj = new THREE.Object3D();
+  for ( var i = 0; i < data.length; i ++ ) {
 
     var element = document.createElement( 'div' );
-        element.textContent = data.labels[labelAxis][i];
+        element.textContent = data[i];
         element.className = 'label';
 
     var object = new THREE.CSS3DObject( element );
-        object.position.x = axis.x
-        object.position.y = axis.y;
-        object.position.z = axis.z;
-        if (labelAxis !== "y"){
-          object.rotation.x = -90*Math.PI/180;
-        } 
-        if (labelAxis == "z"){
-          object.position.x = -50;
-        }
-				if(labelAxis == "y"){
-					 object.position.x = 1150;
-				}
-        if (labelAxis == "x"){
-          object.rotation.z = -270*Math.PI/180;
-          object.position.z = -50;
-        }
+        object.position.x = 0
+        object.position.y = 0;
+        object.position.z = z;
 
-        cssScene.add( object );
+        dobj.add( object );
 
-        axis[labelAxis]+=separator;
+        z+=separator;
 
   }
-
-
+  return dobj;
 }
 
-function newCreateGrid(grid){
-	  /* GRIDS*/
-
-// Grid
-
-		var size = 1000, step = 50;
 
 
-		var zgrid = new THREE.Object3D();
-		var zgridGeo = new THREE.Geometry();
+function createAGrid(opts){
+		var config = opts || {
+			height: 500, 
+			width: 500,
+			linesHeight: 10,
+			linesWidth: 10,
+			color: 0xDD006C
+		};
 
-		for ( var i = - size; i <= size; i += step ) {
+		var material = new THREE.LineBasicMaterial({ 
+			color: config.color, 
+			opacity: 0.2 
+		});
 
-				zgridGeo.vertices.push( new THREE.Vector3( - size, 0, i ) );
-				zgridGeo.vertices.push( new THREE.Vector3(   size, 0, i ) );
+		var gridObject = new THREE.Object3D(),
+				gridGeo= new THREE.Geometry(),
+				stepw = 2*config.width/config.linesWidth,
+				steph = 2*config.height/config.linesHeight;
 
-				zgridGeo.vertices.push( new THREE.Vector3( i, 0, - size ) );
-				zgridGeo.vertices.push( new THREE.Vector3( i, 0,   size ) );
-
-		}
-
-		var red = new THREE.LineBasicMaterial( { color: 0xff0000, opacity: 0.2 } );
-
-		var line = new THREE.Line( zgridGeo, red, THREE.LinePieces );
-
-		zgrid.add( line );
-		zgrid.position.x = -size;
-		zgrid.position.y = -size;
-
-
-		var xgrid = new THREE.Object3D();
-		var xgridGeo = new THREE.Geometry();
-
-		for ( var i = - size; i <= size; i += step ) {
-
-				xgridGeo.vertices.push( new THREE.Vector3( 0, - size, i ) );
-				xgridGeo.vertices.push( new THREE.Vector3( 0, size, i ) );
-
-				xgridGeo.vertices.push( new THREE.Vector3( 0, i, - size ) );
-				xgridGeo.vertices.push( new THREE.Vector3( 0, i, size ) );
+		//width
+		for ( var i = - config.width; i <= config.width; i += stepw ) {
+				gridGeo.vertices.push( new THREE.Vector3( - config.height, i,0 ) );
+				gridGeo.vertices.push( new THREE.Vector3(  config.height, i,0 ) );
 
 		}
-
-		var green = new THREE.LineBasicMaterial( { color: 0x00ff00, opacity: 0.2 } );
-
-		var newline = new THREE.Line( xgridGeo, green, THREE.LinePieces );
-
-		xgrid.add( newline );
-
-
-		var ygrid = new THREE.Object3D();
-		var ygridGeo = new THREE.Geometry();
-
-		for ( var i = - size; i <= size; i += step ) {
-
-				ygridGeo.vertices.push( new THREE.Vector3( - size, i,0 ) );
-				ygridGeo.vertices.push( new THREE.Vector3(  size, i,0 ) );
-
-				ygridGeo.vertices.push( new THREE.Vector3( i, - size,0 ) );
-				ygridGeo.vertices.push( new THREE.Vector3( i, size,0 ) );
-
+		//height
+		for ( var i = - config.height; i <= config.height; i += steph ) {
+				gridGeo.vertices.push( new THREE.Vector3( i,- config.width,0 ) );
+				gridGeo.vertices.push( new THREE.Vector3( i, config.width, 0 ) );
 		}
 
-		var blue = new THREE.LineBasicMaterial( { color: 0x0000ff, opacity: 0.2 } );
+		var line = new THREE.Line( gridGeo, material, THREE.LinePieces );
+		gridObject.add(line);
 
-		var newline1 = new THREE.Line( ygridGeo, blue, THREE.LinePieces );
-
-		ygrid.add( newline1 );
-		ygrid.position.x = -size;
-		ygrid.position.z = -size;
-
-		grid.add(zgrid);
-		grid.add(xgrid);
-		grid.add(ygrid);
-
+		return gridObject;
 }
 
-function createGrids(){
-  var size = 500;
-  //GREEN
-  var gridXZ = new THREE.GridHelper(size, (Math.ceil(size / data.labels.x.length ))*2);
-  gridXZ.setColors( new THREE.Color(0x19C37F), new THREE.Color(0x19C37F) );
-  gridXZ.position.set( -size, -size/2, size );
-  glScene.add(gridXZ);
 
-
-  //BLUE
-  var gridXY = new THREE.GridHelper(size, (Math.ceil(size / data.labels.y.length))*2);
-  gridXY.position.set( -size, size, -size/2 );
-  gridXY.rotation.x = Math.PI/2;
-  gridXY.setColors( new THREE.Color(0x1FC7FF), new THREE.Color(0x1FC7FF) );
-	glScene.add(gridXY);
-
-  //PINK
-  var gridYZ = new THREE.GridHelper(size, (Math.ceil(size / data.labels.z.length))*2);
-  gridYZ.position.set( -size/2, size, -size);
-  gridYZ.rotation.z = Math.PI/2;
-  gridYZ.setColors( new THREE.Color(0xDD006C), new THREE.Color(0xDD006C) );
-  glScene.add(gridYZ);
-  
-}
 
 
 function gridInit(){
-	var grid = new THREE.Object3D();
-	newCreateGrid(grid);
 
-	grid.position.x= 500;
-	glScene.add(grid);
-	
-	//createGrids();
-	
+	var helper = new THREE.GridHelper( 200, 10 );
+			helper.setColors( 0x0000ff, 0x808080 );
+			//helper.position.y = - 150;
+			glScene.add( helper );
 
 
-	// labelAxis("x");
-	// labelAxis("y");
-	// labelAxis("z");
+	var boundingGrid = new THREE.Object3D(),
+			depth = graphDimensions.w/2, //depth
+			width = graphDimensions.d/2, //width
+			height = 400, //height
+			a =data.labels.x.length,
+			b= data.labels.y.length,
+			c= data.labels.z.length;
+
+	//pink
+	var newGridXY = createAGrid({
+				height: width, 
+				width: height,
+				linesHeight: b,
+				linesWidth: a,
+				color: 0xDD006C
+			});
+			newGridXY.position.y = height;
+	  	newGridXY.position.x = -width;
+			boundingGrid.add(newGridXY);
+
+	//blue
+	var newGridYZ = createAGrid({
+				height: width, 
+				width: depth,
+				linesHeight: b,
+				linesWidth: c,
+				color: 0x1FC7FF
+			});
+			newGridYZ.position.z = depth;
+			newGridYZ.position.x = -width;
+	 		newGridYZ.rotation.x = Math.PI/2;
+			boundingGrid.add(newGridYZ);
+
+	//green
+	var newGridXZ = createAGrid({
+				height: depth, 
+				width: height,
+				linesHeight:c,
+				linesWidth: a,
+				color: 0x19C37F
+			});
+
+			newGridXZ.position.z= depth;
+			newGridXZ.position.y= height;
+	 		newGridXZ.rotation.y = Math.PI/2;
+			boundingGrid.add(newGridXZ);
+
+	glScene.add(boundingGrid);
+
+
+	// var labelsW = labelAxis(width, data.labels.x);
+	// cssScene.add(labelsW);
+	// var labelsD = labelAxis(depth, data.labels.y);
+	// var labelsH = labelAxis(height, data.labels.z);
 
 };
 
@@ -199,8 +181,8 @@ function init() {
 //   Set up camera
 //____________________________________________________________________________
 
-	camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 30000 );
-	camera.position.z = 500;
+	camera = new THREE.PerspectiveCamera( 100, window.innerWidth / window.innerHeight, 1, 30000 );
+	camera.position.set(-1500, 128, 1000);
 
 	controls = new THREE.OrbitControls( camera );
 	controls.damping = 0.2;
@@ -233,17 +215,25 @@ function init() {
 
 
 //----------------------------------------------------------------------------
-//    Test a label
+//    data
 //____________________________________________________________________________
 
 	gridInit();
-		
 
-  geometry = new THREE.BoxGeometry( 200, 200, 200 );
-  material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
+	var wireframeMaterial = new THREE.MeshBasicMaterial( { color: 0x000088, side:THREE.DoubleSide } ); 
+	var floorGeometry = new THREE.PlaneGeometry(graphDimensions.w,graphDimensions.d,10,2405);
 
-  mesh = new THREE.Mesh( geometry, material );
-  glScene.add( mesh );
+	for (var i =0; i< floorGeometry.vertices.length; i++){
+		//console.log(floorGeometry.vertices[i].z);
+		floorGeometry.vertices[i].z=realData[i][2]*100;
+	}
+	var floor = new THREE.Mesh(floorGeometry, wireframeMaterial);
+		floor.rotation.x = -Math.PI/2;
+
+		floor.position.z = graphDimensions.w/2;
+		floor.position.x = -graphDimensions.d/2;
+		floor.rotation.z = Math.PI/2;
+	glScene.add(floor);
 
 //----------------------------------------------------------------------------
 //    SET UP RENDERERS
@@ -326,25 +316,37 @@ function onWindowResize() {
   $(".buttons").bind('click',function(){ 
   	if ($(this).attr('id')=="camera-1"){
   		console.log("camera one");
-			camera.rotation.x = - Math.PI / 2;
-			camera.rotation.y = 0;
-			camera.rotation.z = 0;
+  		//controls.reset();
+  		camera.fov = 3000;
+			camera.updateProjectionMatrix();
+  		camera.position.z = 100;
+
+			
 
   	}
 
 		if ($(this).attr('id')=="camera-2"){
 			console.log("camera two");
-			camera.position.x = 100;
+			controls.reset();
+			camera.fov = 60;
+			camera.updateProjectionMatrix();
+			camera.position.z = 2000;
 		}
 
 		if ($(this).attr('id')=="camera-3"){
   		console.log("camera three");
-			camera.position.x = 500;
+  		controls.reset();
+  		camera.fov = 60;
+			camera.updateProjectionMatrix();
+			camera.position.z = 1500;
   	}
 
   	if ($(this).attr('id')=="camera-4"){
   		console.log("camera four");
-			camera.position.x = 700;
+  		controls.reset();
+  		camera.fov = 60;
+			camera.updateProjectionMatrix();
+			camera.position.z = 1000;
   	}
 
   });
