@@ -15,12 +15,11 @@ var windowWidth = window.innerWidth,
 
 var realData;
 
-var colors = ["#eef4f8","#ddecf4","#cce5f0","#bcddec","#aed5e7","#a0cde2","#94c5dc","#89bcd6","#7eb4d0","#74abc9","#6aa2c2","#619abb","#5892b4","#4f8aad","#4781a6","#3f799f","#3a7195","#35688c","#326082","#2f5877","#2c506c","#243d52"];
 
 var data = {
   labels: {
   	x: ["2%", "4%", "6%", "8%"],
-    y: ["\'06","\'07","\'08","\'09","\'10","\'11","\'12","\'13","\'14","\'15"],
+    y: ["\'05","\'06","\'07","\'08","\'09","\'10","\'11","\'12","\'13","\'14","\'15"],
     z: ["1-month","3-month","6-month","1-year","2-year","3-year","5-year","7-year","10-year", "20-year","30-year"]
   },
   us:[48,83,163,184,302,303,549,550,663,729,730, 849,858,890,973,1001,1063,1087,1130,1213,1254,1436,1586,1629,1630,1672,1768,1821,1852,1905,1951,1985,1986,2082,2145,2215,2216,2247,2290,2293,2372,2373,2404,2457,2590,2595,2598,2684,2716,2717,2785,2856,2878,2881,2992,2998,3062,3093,3203,3204,3229,3257,3258,3306,3419,3420,3467,3480,3503,3593,3613,3694,3731,3809,3839,3902,3903,3964,4092,4124,4205,4270,4323,4364,4449,4450,4451,4499,4536,4616,4617,4790,4791,4861,4863,4904,4905,4958,5003,5004,5067,5068,5178,5243,5251,5280,5323,5380,5400,5461,5462,5557,5558,5663,5683,5684,5711,5801,5882,5925,5952,6004,6067,6068,6119,6149,6184,6218,6248,6298,6299]
@@ -108,12 +107,6 @@ function createAGrid(opts){
 
 function gridInit(){
 
-	var helper = new THREE.GridHelper( 200, 10 );
-			helper.setColors( 0x0000ff, 0x808080 );
-			//helper.position.y = - 150;
-			glScene.add( helper );
-
-
 	var boundingGrid = new THREE.Object3D(),
 			depth = graphDimensions.w/2, //depth
 			width = graphDimensions.d/2, //width
@@ -128,7 +121,7 @@ function gridInit(){
 				width: height,
 				linesHeight: b,
 				linesWidth: a,
-				color: 0xDD006C
+				color: 0xcccccc
 			});
 			newGridXY.position.y = height;
 	  	newGridXY.position.x = -width;
@@ -140,7 +133,7 @@ function gridInit(){
 				width: depth,
 				linesHeight: b,
 				linesWidth: c,
-				color: 0x1FC7FF
+				color: 0xcccccc
 			});
 			newGridYZ.position.z = depth;
 			newGridYZ.position.x = -width;
@@ -153,7 +146,7 @@ function gridInit(){
 				width: height,
 				linesHeight:c,
 				linesWidth: a,
-				color: 0x19C37F
+				color: 0xcccccc
 			});
 
 			newGridXZ.position.z= depth;
@@ -181,12 +174,14 @@ function init() {
 //   Set up camera
 //____________________________________________________________________________
 
-	camera = new THREE.PerspectiveCamera( 100, window.innerWidth / window.innerHeight, 1, 30000 );
-	camera.position.set(-1500, 128, 1000);
+	camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 30000 );
+	camera.position.set(1207, 600, 3019);
+
 
 	controls = new THREE.OrbitControls( camera );
 	controls.damping = 0.2;
 	controls.addEventListener( 'change', render );
+//	controls.center = new THREE.Vector3(-790.2369893225884, 272.3081911433925,-111.93158124722541);
 
 
 
@@ -220,16 +215,64 @@ function init() {
 
 	gridInit();
 
-	var wireframeMaterial = new THREE.MeshBasicMaterial( { color: 0x000088, side:THREE.DoubleSide } ); 
-	var floorGeometry = new THREE.PlaneGeometry(graphDimensions.w,graphDimensions.d,10,2405);
+	var wireframeMaterial = new THREE.MeshBasicMaterial( { 
+														side:THREE.DoubleSide,
+														vertexColors: THREE.VertexColors
+													}); 
 
+	var lineMat = new THREE.LineBasicMaterial({
+									color: 0xffffff
+								});
+	var blacklineMat = new THREE.LineBasicMaterial({
+								color: 0x000000
+							});
+	var floorGeometry = new THREE.PlaneGeometry(graphDimensions.w,graphDimensions.d,10,2405);
+	var colors = ["#eef4f8","#ddecf4","#cce5f0","#bcddec","#aed5e7","#a0cde2","#94c5dc","#89bcd6","#7eb4d0","#74abc9","#6aa2c2","#619abb","#5892b4","#4f8aad","#4781a6","#3f799f","#3a7195","#35688c","#326082","#2f5877","#2c506c","#243d52"];
+	var faceColors = [];
+	var lines={};
 	for (var i =0; i< floorGeometry.vertices.length; i++){
-		//console.log(floorGeometry.vertices[i].z);
-		floorGeometry.vertices[i].z=realData[i][2]*100;
+		
+
+		faceColors.push(colors[Math.round(realData[i][2]*4)]);
+		//console.log(Math.round(realData[i][2]*0.5));
+		if (realData[i][2] == null){
+			floorGeometry.vertices[i].z="rgba(0,0,0,0)";
+		}else{
+			floorGeometry.vertices[i].z=realData[i][2]*100;
+			if (!lines[floorGeometry.vertices[i].x]) { 
+				lines[floorGeometry.vertices[i].x] = new THREE.Geometry();
+			}
+			lines[floorGeometry.vertices[i].x].vertices.push(new THREE.Vector3(floorGeometry.vertices[i].x, floorGeometry.vertices[i].y, realData[i][2]*100));
+		}
+
 	}
+
+	for (var x= 0; x <floorGeometry.faces.length; x++){
+		floorGeometry.faces[x].vertexColors[0] = new THREE.Color(faceColors[floorGeometry.faces[x].a]);
+		floorGeometry.faces[x].vertexColors[1] = new THREE.Color(faceColors[floorGeometry.faces[x].b]);
+		floorGeometry.faces[x].vertexColors[2] = new THREE.Color(faceColors[floorGeometry.faces[x].c]);
+		//floorGeometry.faces[x].color= new THREE.Color(colors[Math.round(Math.random()*colors.length)]);
+	}
+
+	for (line in lines){
+		if (line == "-500"){
+			var graphLine= new THREE.Line(lines[line], blacklineMat);
+		}else{
+			var graphLine= new THREE.Line(lines[line], lineMat);
+		}
+
+		graphLine.rotation.x = -Math.PI/2;
+		graphLine.position.z = graphDimensions.w/2;
+		graphLine.position.x = -graphDimensions.d/2;
+		graphLine.rotation.z = Math.PI/2;
+
+		glScene.add(graphLine);
+	}
+
+//	var bufferG = new THREE.BufferGeometry().fromGeometry(floorGeometry);
+
 	var floor = new THREE.Mesh(floorGeometry, wireframeMaterial);
 		floor.rotation.x = -Math.PI/2;
-
 		floor.position.z = graphDimensions.w/2;
 		floor.position.x = -graphDimensions.d/2;
 		floor.rotation.z = Math.PI/2;
@@ -285,7 +328,6 @@ function animate() {
 }
 
 function render() {
-
 	cssRenderer.render( cssScene, camera );
 	glRenderer.render( glScene, camera );
 	//stats.update();
@@ -317,12 +359,8 @@ function onWindowResize() {
   	if ($(this).attr('id')=="camera-1"){
   		console.log("camera one");
   		//controls.reset();
-  		camera.fov = 3000;
-			camera.updateProjectionMatrix();
-  		camera.position.z = 100;
-
-			
-
+  		camera.fov = 30;
+			camera.position.set(1149.8830275661012, 531.6122496479234, 505.4931375393053);
   	}
 
 		if ($(this).attr('id')=="camera-2"){
