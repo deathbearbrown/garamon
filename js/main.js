@@ -11,7 +11,7 @@ var light;
 var mouseX = 0, mouseY = 0;
 
 var windowWidth = $("#container").innerWidth(), 
-		windowHeight = $("#container").innerHeight();
+		windowHeight = $("#container").innerHeight(); 
 
 var realData;
 
@@ -21,7 +21,7 @@ var data = {
   	x: ["2%", "4%", "6%", "8%"],
     y: ["\'05","\'06","\'07","\'08","\'09","\'10","\'11","\'12","\'13","\'14","\'15"],
     z: ["1-month","3-month","6-month","1-year","2-year","3-year","5-year","7-year","10-year", "20-year","30-year"]
-  },
+  }
 };
 
 $.getJSON( "./js/2005-2015.json", function( data ) {
@@ -32,7 +32,8 @@ $.getJSON( "./js/2005-2015.json", function( data ) {
 
 var graphDimensions = {
 	w:1000,
-	d:2405
+	d:2405,
+	h:800
 };
 
 
@@ -61,7 +62,19 @@ function labelAxis(width, data, title){
   return dobj;
 }
 
-
+//----------------------------------------------------------------------------
+//  createAGrid
+//
+// opts
+// {
+// 	height: width, 
+// 	width: depth,
+// 	linesHeight: b,
+// 	linesWidth: c,
+// 	color: 0xcccccc
+// }
+//
+//____________________________________________________________________________
 
 function createAGrid(opts){
 		var config = opts || {
@@ -100,7 +113,9 @@ function createAGrid(opts){
 		return gridObject;
 }
 
-
+//----------------------------------------------------------
+// Initialize grids 
+//----------------------------------------------------------
 
 
 function gridInit(){
@@ -108,7 +123,7 @@ function gridInit(){
 	var boundingGrid = new THREE.Object3D(),
 			depth = graphDimensions.w/2, //depth
 			width = graphDimensions.d/2, //width
-			height = 400, //height
+			height = graphDimensions.h/2, //height
 			a =data.labels.x.length,
 			b= data.labels.y.length,
 			c= data.labels.z.length;
@@ -121,8 +136,8 @@ function gridInit(){
 				linesWidth: a,
 				color: 0xcccccc
 			});
-			newGridXY.position.y = height;
-	  	newGridXY.position.x = -width;
+			//newGridXY.position.y = height;
+	  	newGridXY.position.z = -depth;
 			boundingGrid.add(newGridXY);
 
 	//blue
@@ -133,9 +148,8 @@ function gridInit(){
 				linesWidth: c,
 				color: 0xcccccc
 			});
-			newGridYZ.position.z = depth;
-			newGridYZ.position.x = -width;
 	 		newGridYZ.rotation.x = Math.PI/2;
+	 		newGridYZ.position.y = -height;
 			boundingGrid.add(newGridYZ);
 
 	//green
@@ -147,8 +161,8 @@ function gridInit(){
 				color: 0xcccccc
 			});
 
-			newGridXZ.position.z= depth;
-			newGridXZ.position.y= height;
+			newGridXZ.position.x = width;
+			//newGridXZ.position.y = height;
 	 		newGridXZ.rotation.y = Math.PI/2;
 			boundingGrid.add(newGridXZ);
 
@@ -179,9 +193,6 @@ function init() {
 	controls = new THREE.OrbitControls( camera );
 	controls.damping = 0.2;
 	controls.addEventListener( 'change', render );
-//	controls.center = new THREE.Vector3(-790.2369893225884, 272.3081911433925,-111.93158124722541);
-
-
 
 //----------------------------------------------------------------------------
 //   Create scenes for webGL and css
@@ -222,36 +233,42 @@ function init() {
 									color: 0xffffff
 								});
 	var blacklineMat = new THREE.LineBasicMaterial({
-								color: 0x000000
-							});
+												color: 0x000000
+											});
+
 	var floorGeometry = new THREE.PlaneGeometry(graphDimensions.w,graphDimensions.d,10,2405);
 	var colors = ["#eef4f8","#ddecf4","#cce5f0","#bcddec","#aed5e7","#a0cde2","#94c5dc","#89bcd6","#7eb4d0","#74abc9","#6aa2c2","#619abb","#5892b4","#4f8aad","#4781a6","#3f799f","#3a7195","#35688c","#326082","#2f5877","#2c506c","#243d52"];
 	var faceColors = [];
 	var lines={};
-	for (var i =0; i< floorGeometry.vertices.length; i++){
-		
 
+	// on plane Geometry, change the z value to create the 3D area surface
+	// just like when creating a terrain 
+	for (var i =0; i< floorGeometry.vertices.length; i++){
+
+		//push colors to the faceColors array
 		faceColors.push(colors[Math.round(realData[i][2]*4)]);
-		//console.log(Math.round(realData[i][2]*0.5));
+
 		if (realData[i][2] == null){
-			floorGeometry.vertices[i].z="rgba(0,0,0,0)";
+			//hack hack hack
+			floorGeometry.vertices[i].z="null";
 		}else{
 			floorGeometry.vertices[i].z=realData[i][2]*100;
 			if (!lines[floorGeometry.vertices[i].x]) { 
 				lines[floorGeometry.vertices[i].x] = new THREE.Geometry();
 			}
+			//arrays for the grid lines
 			lines[floorGeometry.vertices[i].x].vertices.push(new THREE.Vector3(floorGeometry.vertices[i].x, floorGeometry.vertices[i].y, realData[i][2]*100));
 		}
-
 	}
 
+	//vertexColors
 	for (var x= 0; x <floorGeometry.faces.length; x++){
 		floorGeometry.faces[x].vertexColors[0] = new THREE.Color(faceColors[floorGeometry.faces[x].a]);
 		floorGeometry.faces[x].vertexColors[1] = new THREE.Color(faceColors[floorGeometry.faces[x].b]);
 		floorGeometry.faces[x].vertexColors[2] = new THREE.Color(faceColors[floorGeometry.faces[x].c]);
-		//floorGeometry.faces[x].color= new THREE.Color(colors[Math.round(Math.random()*colors.length)]);
 	}
 
+	//grid lines
 	for (line in lines){
 		if (line == "-500"){
 			var graphLine= new THREE.Line(lines[line], blacklineMat);
@@ -260,8 +277,8 @@ function init() {
 		}
 
 		graphLine.rotation.x = -Math.PI/2;
-		graphLine.position.z = graphDimensions.w/2;
-		graphLine.position.x = -graphDimensions.d/2;
+		graphLine.position.y = -graphDimensions.h/2;
+
 		graphLine.rotation.z = Math.PI/2;
 
 		glScene.add(graphLine);
@@ -271,8 +288,8 @@ function init() {
 
 	var floor = new THREE.Mesh(floorGeometry, wireframeMaterial);
 		floor.rotation.x = -Math.PI/2;
-		floor.position.z = graphDimensions.w/2;
-		floor.position.x = -graphDimensions.d/2;
+		floor.position.y = -graphDimensions.h/2;
+
 		floor.rotation.z = Math.PI/2;
 	glScene.add(floor);
 
