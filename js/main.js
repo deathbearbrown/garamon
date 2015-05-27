@@ -10,8 +10,8 @@ var light;
 
 var mouseX = 0, mouseY = 0;
 
-var windowWidth = window.innerWidth, 
-		windowHeight = window.innerHeight;
+var windowWidth = $("#container").innerWidth(), 
+		windowHeight = $("#container").innerHeight();
 
 var realData;
 
@@ -172,7 +172,7 @@ function init() {
 //   Set up camera
 //____________________________________________________________________________
 
-	camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 30000 );
+	camera = new THREE.PerspectiveCamera( 30, windowWidth / windowHeight, 1, 30000 );
 	camera.position.set(1207, 600, 3019);
 
 
@@ -284,12 +284,12 @@ function init() {
   glRenderer = new THREE.WebGLRenderer();
   glRenderer.setPixelRatio( window.devicePixelRatio );
   glRenderer.setClearColor( 0xf0f0f0 );
-  glRenderer.setSize( window.innerWidth, window.innerHeight);
+  glRenderer.setSize( windowWidth, windowHeight);
   container.appendChild( glRenderer.domElement );
 
   //set up CSS renderer
   cssRenderer = new THREE.CSS3DRenderer();
-  cssRenderer.setSize( window.innerWidth, window.innerHeight);
+  cssRenderer.setSize( windowWidth, windowHeight);
   cssRenderer.domElement.style.position = 'absolute';
   cssRenderer.domElement.style.top = 0;
   container.appendChild( cssRenderer.domElement );
@@ -338,11 +338,11 @@ function render() {
 //----------------------------------------------------------------------------
 function onWindowResize() {
 
-	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.aspect = windowWidth / windowHeight;
 	camera.updateProjectionMatrix();
 
-	glRenderer.setSize( window.innerWidth, window.innerHeight );
-	cssRenderer.setSize( window.innerWidth, window.innerHeight );
+	glRenderer.setSize( windowWidth, windowHeight );
+	cssRenderer.setSize( windowWidth, windowHeight );
 
 	render();
 
