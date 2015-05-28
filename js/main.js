@@ -18,8 +18,8 @@ var realData;
 
 var data = {
   labels: {
-  	x: ["2%", "4%", "6%", "8%"],
-    y: ["\'05","\'06","\'07","\'08","\'09","\'10","\'11","\'12","\'13","\'14","\'15"],
+  	y: ["2%", "4%", "6%", "8%"],
+    x: ["\'05","\'06","\'07","\'08","\'09","\'10","\'11","\'12","\'13","\'14","\'15"],
     z: ["1-month","3-month","6-month","1-year","2-year","3-year","5-year","7-year","10-year", "20-year","30-year"]
   }
 };
@@ -37,30 +37,71 @@ var graphDimensions = {
 };
 
 
-function labelAxis(width, data, title){
+function labelAxis(width, data, direction){
 
   var separator = 2*width/data.length,
-			z = separator;
+			p = {
+				x:0,
+				y:0,
+				z:0
+			},
+			dobj = new THREE.Object3D();
 
-	var dobj = new THREE.Object3D();
   for ( var i = 0; i < data.length; i ++ ) {
-
-    var element = document.createElement( 'div' );
-        element.textContent = data[i];
-        element.className = 'label';
-
-    var object = new THREE.CSS3DObject( element );
-        object.position.x = 0
-        object.position.y = 0;
-        object.position.z = z;
-
-        dobj.add( object );
-
-        z+=separator;
-
+		var label = makeTextSprite(data[i]);
+		
+		label.position.set(p.x,p.y,p.z);
+		
+		dobj.add( label );
+		if (direction=="y"){
+			p[direction]+=separator;
+		}else{
+			p[direction]-=separator;
+		}
+		
   }
   return dobj;
 }
+
+
+
+function makeTextSprite( message, parameters )
+{
+	if ( parameters === undefined ) parameters = {};
+	
+	var fontface = parameters.hasOwnProperty("fontface") ? 
+		parameters["fontface"] : "Arial";
+	
+	var fontsize = parameters.hasOwnProperty("fontsize") ? 
+		parameters["fontsize"] : 32;
+	
+
+	var canvas = document.createElement('canvas');
+	var context = canvas.getContext('2d');
+	context.font = fontsize + "px " + fontface;
+    
+	// get size data (height depends only on font size)
+	var metrics = context.measureText( message );
+	var textWidth = metrics.width;
+
+
+	// text color
+	context.fillStyle = "rgba(0, 0, 0, 1.0)";
+	context.fillText( message, 0, fontsize);
+	
+	// canvas contents will be used for a texture
+	var texture = new THREE.Texture(canvas) 
+			texture.minFilter = THREE.LinearFilter;
+			texture.needsUpdate = true;
+
+	var spriteMaterial = new THREE.SpriteMaterial({ map: texture, useScreenCoordinates: false});
+	var sprite = new THREE.Sprite( spriteMaterial );
+	sprite.scale.set(100,50,1.0);
+	return sprite;	
+}
+
+
+
 
 //----------------------------------------------------------------------------
 //  createAGrid
@@ -124,8 +165,8 @@ function gridInit(){
 			depth = graphDimensions.w/2, //depth
 			width = graphDimensions.d/2, //width
 			height = graphDimensions.h/2, //height
-			a =data.labels.x.length,
-			b= data.labels.y.length,
+			a =data.labels.y.length,
+			b= data.labels.x.length,
 			c= data.labels.z.length;
 
 	//pink
@@ -169,11 +210,23 @@ function gridInit(){
 	glScene.add(boundingGrid);
 
 
-	// var labelsW = labelAxis(width, data.labels.x);
-	// cssScene.add(labelsW);
-	// var labelsD = labelAxis(depth, data.labels.y);
-	// var labelsH = labelAxis(height, data.labels.z);
+	var labelsW = labelAxis(width, data.labels.x,"x");
+			labelsW.position.x = width+40;
+			labelsW.position.y = -height -40;
+			labelsW.position.z = depth;
+			glScene.add(labelsW);
 
+	var labelsH = labelAxis(height, data.labels.y,"y");
+			labelsH.position.x = width;
+			labelsH.position.y = - height +(2*height/a)-20;
+			labelsH.position.z = depth;
+			glScene.add(labelsH);
+
+	var labelsD = labelAxis(depth, data.labels.z, "z");
+			labelsD.position.x = width;
+			labelsD.position.y = -(height)-40;
+			labelsD.position.z = depth-40;
+			glScene.add(labelsD);
 };
 
 
@@ -284,7 +337,7 @@ function init() {
 		glScene.add(graphLine);
 	}
 
-//	var bufferG = new THREE.BufferGeometry().fromGeometry(floorGeometry);
+  //var bufferG = new THREE.BufferGeometry().fromGeometry(floorGeometry);
 
 	var floor = new THREE.Mesh(floorGeometry, wireframeMaterial);
 		floor.rotation.x = -Math.PI/2;
@@ -382,8 +435,10 @@ function onWindowResize() {
 			console.log("camera two");
 			controls.reset();
 			camera.fov = 60;
+			camera.position.set(1000,0,0);
+			camera.up = new THREE.Vector3(0,1,0);
+			camera.lookAt(new THREE.Vector3(0,0,0));
 			camera.updateProjectionMatrix();
-			camera.position.z = 2000;
 		}
 
 		if ($(this).attr('id')=="camera-3"){
