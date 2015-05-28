@@ -34,7 +34,7 @@ $.getJSON( "./js/2005-2015.json", function( data ) {
 
 var graphDimensions = {
 	w:1000,
-	d:2405,
+	d:2505,
 	h:800
 };
 
@@ -48,7 +48,9 @@ function labelAxis(width, data, direction){
 				z:0
 			},
 			dobj = new THREE.Object3D();
-
+		if (direction!=="y"){
+			p[direction]-=separator;
+		}
   for ( var i = 0; i < data.length; i ++ ) {
 		var label = makeTextSprite(data[i]);
 		
@@ -283,6 +285,7 @@ function init() {
 
 	var wireframeMaterial = new THREE.MeshBasicMaterial( { 
 														side:THREE.DoubleSide,
+														//color: 0xff0000
 														vertexColors: THREE.VertexColors
 													}); 
 
@@ -292,62 +295,85 @@ function init() {
 	var blacklineMat = new THREE.LineBasicMaterial({
 												color: 0x000000
 											});
-
-	var floorGeometry = new THREE.PlaneGeometry(graphDimensions.w,graphDimensions.d,10,2405);
-	var colors = ["#eef4f8","#ddecf4","#cce5f0","#bcddec","#aed5e7","#a0cde2","#94c5dc","#89bcd6","#7eb4d0","#74abc9","#6aa2c2","#619abb","#5892b4","#4f8aad","#4781a6","#3f799f","#3a7195","#35688c","#326082","#2f5877","#2c506c","#243d52"];
+	var blues = ["#eef4f8","#ddecf4","#cce5f0","#bcddec","#aed5e7","#a0cde2","#94c5dc","#89bcd6","#7eb4d0","#74abc9","#6aa2c2","#619abb","#5892b4","#4f8aad","#4781a6","#3f799f","#3a7195","#35688c","#326082","#2f5877","#2c506c","#243d52"];
 	var faceColors = [];
 	var lines={};
+	var geometry = new THREE.BufferGeometry();
+	var vertexPositions = realData;
+	var YsegmentWidth = graphDimensions.w/11;
+	var vertices = new Float32Array( vertexPositions.length * 3 );
+	var colors = new Float32Array( vertexPositions.length * 3 );
+		for ( var i = 0; i < vertexPositions.length; i++ )
+		{
 
-	// on plane Geometry, change the z value to create the 3D area surface
-	// just like when creating a terrain 
-	for (var i =0; i< floorGeometry.vertices.length; i++){
 
-		//push colors to the faceColors array
-		faceColors.push(colors[Math.round(realData[i][2]*4)]);
-
-		if (realData[i][2] == null){
-			//hack hack hack
-			floorGeometry.vertices[i].z="null";
-		}else{
-			floorGeometry.vertices[i].z=realData[i][2]*100;
-			if (!lines[floorGeometry.vertices[i].x]) { 
-				lines[floorGeometry.vertices[i].x] = new THREE.Geometry();
+			if (realData[i][2] == null){
+				vertices[ i*3 + 2 ] = "null";
+			} else {
+				vertices[ i*3 + 0 ] = vertexPositions[i][0];
+				vertices[ i*3 + 1 ] = vertexPositions[i][1]*YsegmentWidth;
+				vertices[ i*3 + 2 ] = vertexPositions[i][2]*100;
 			}
-			//arrays for the grid lines
-			lines[floorGeometry.vertices[i].x].vertices.push(new THREE.Vector3(floorGeometry.vertices[i].x, floorGeometry.vertices[i].y, realData[i][2]*100));
+
+			colors[ i*3 + 0 ] = new THREE.Color(blues[Math.round(realData[i][2]*4)]);
+			colors[ i*3 + 1 ] = new THREE.Color(blues[Math.round(realData[i][2]*4)]);
+			colors[ i*3 + 2 ] = new THREE.Color(blues[Math.round(realData[i][2]*4)]);
 		}
-	}
+
+	geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+	geometry.addAttribute( 'color', new THREE.BufferAttribute( colors, 3 ) );
+
+
+	// // on plane Geometry, change the z value to create the 3D area surface
+	// // just like when creating a terrain 
+	// for (var i =0; i< floorGeometry.vertices.length; i++){
+
+	// 	//push colors to the faceColors array
+	// 	faceColors.push(colors[Math.round(realData[i][2]*4)]);
+
+	// 	if (realData[i][2] == null){
+	// 		//hack hack hack
+	// 		floorGeometry.vertices[i].z="null";
+	// 	}else{
+	// 		floorGeometry.vertices[i].z=realData[i][2]*100;
+	// 		if (!lines[floorGeometry.vertices[i].x]) { 
+	// 			lines[floorGeometry.vertices[i].x] = new THREE.Geometry();
+	// 		}
+	// 		//arrays for the grid lines
+	// 		lines[floorGeometry.vertices[i].x].vertices.push(new THREE.Vector3(floorGeometry.vertices[i].x, floorGeometry.vertices[i].y, realData[i][2]*100));
+	// 	}
+	// }
 
 	//vertexColors
-	for (var x= 0; x <floorGeometry.faces.length; x++){
-		floorGeometry.faces[x].vertexColors[0] = new THREE.Color(faceColors[floorGeometry.faces[x].a]);
-		floorGeometry.faces[x].vertexColors[1] = new THREE.Color(faceColors[floorGeometry.faces[x].b]);
-		floorGeometry.faces[x].vertexColors[2] = new THREE.Color(faceColors[floorGeometry.faces[x].c]);
-	}
+	// for (var x= 0; x <floorGeometry.faces.length; x++){
+	// 	floorGeometry.faces[x].vertexColors[0] = new THREE.Color(faceColors[floorGeometry.faces[x].a]);
+	// 	floorGeometry.faces[x].vertexColors[1] = new THREE.Color(faceColors[floorGeometry.faces[x].b]);
+	// 	floorGeometry.faces[x].vertexColors[2] = new THREE.Color(faceColors[floorGeometry.faces[x].c]);
+	// }
 
-	//grid lines
-	for (line in lines){
-		if (line == "-500"){
-			var graphLine= new THREE.Line(lines[line], blacklineMat);
-		}else{
-			var graphLine = new THREE.Line(lines[line], lineMat);
-		}
+	// //grid lines
+	// for (line in lines){
+	// 	if (line == "-500"){
+	// 		var graphLine= new THREE.Line(lines[line], blacklineMat);
+	// 	}else{
+	// 		var graphLine = new THREE.Line(lines[line], lineMat);
+	// 	}
 
-		graphLine.rotation.x = -Math.PI/2;
-		graphLine.position.y = -graphDimensions.h/2;
+	// 	graphLine.rotation.x = -Math.PI/2;
+	// 	graphLine.position.y = -graphDimensions.h/2;
 
-		graphLine.rotation.z = Math.PI/2;
+	// 	graphLine.rotation.z = Math.PI/2;
 
-		glScene.add(graphLine);
-	}
+	// 	glScene.add(graphLine);
+	// }
 
   //var bufferG = new THREE.BufferGeometry().fromGeometry(floorGeometry);
 
-	var floor = new THREE.Mesh(floorGeometry, wireframeMaterial);
+	var floor = new THREE.Mesh(geometry, wireframeMaterial);
 		floor.rotation.x = -Math.PI/2;
 		floor.position.y = -graphDimensions.h/2;
-
-		floor.rotation.z = Math.PI/2;
+		floor.position.x = -graphDimensions.d/2;
+floor.position.z = graphDimensions.w/2;
 	glScene.add(floor);
 
 //----------------------------------------------------------------------------
