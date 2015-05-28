@@ -15,6 +15,8 @@ var windowWidth = $("#container").innerWidth(),
 
 var realData;
 
+var startPosition;
+
 
 var data = {
   labels: {
@@ -73,7 +75,7 @@ function makeTextSprite( message, parameters )
 		parameters["fontface"] : "Helvetica";
 	
 	var fontsize = parameters.hasOwnProperty("fontsize") ? 
-		parameters["fontsize"] : 40;
+		parameters["fontsize"] : 70;
 	
 
 	var canvas = document.createElement('canvas');
@@ -238,10 +240,12 @@ function init() {
 //----------------------------------------------------------------------------
 //   Set up camera
 //____________________________________________________________________________
-
-	camera = new THREE.PerspectiveCamera( 30, windowWidth / windowHeight, 1, 30000 );
-	camera.position.set(1207, 600, 3019);
-
+	vFOVRadians = 2 * Math.atan( windowHeight / ( 2 * 1500 ) ),
+	fov = vFOVRadians * 180 / Math.PI;
+	startPosition = new THREE.Vector3( 0, 0, 3000 );
+	camera = new THREE.PerspectiveCamera( fov, windowWidth / windowHeight, 1, 30000 );
+	camera.position.set( startPosition.x, startPosition.y, startPosition.z );
+	
 
 	controls = new THREE.OrbitControls( camera );
 	controls.damping = 0.2;
@@ -326,7 +330,7 @@ function init() {
 		if (line == "-500"){
 			var graphLine= new THREE.Line(lines[line], blacklineMat);
 		}else{
-			var graphLine= new THREE.Line(lines[line], lineMat);
+			var graphLine = new THREE.Line(lines[line], lineMat);
 		}
 
 		graphLine.rotation.x = -Math.PI/2;
@@ -370,10 +374,11 @@ function init() {
 //    SET UP STATS
 //____________________________________________________________________________
 
-  // stats = new Stats();
-  // stats.domElement.style.position = 'absolute';
-  // stats.domElement.style.top = '0px';
-  // container.appendChild( stats.domElement );
+  stats = new Stats();
+  stats.domElement.style.position = 'absolute';
+  stats.domElement.style.bottom = '10px';
+  stats.domElement.style.left= '10px';
+  container.appendChild( stats.domElement );
 
 
 
@@ -396,9 +401,10 @@ function animate() {
 }
 
 function render() {
+	camera.lookAt( glScene.position );
 	cssRenderer.render( cssScene, camera );
 	glRenderer.render( glScene, camera );
-	//stats.update();
+  stats.update();
 
 }
 
@@ -425,28 +431,36 @@ function onWindowResize() {
 
   $(".buttons").bind('click',function(){ 
   	if ($(this).attr('id')=="camera-1"){
-  		console.log("camera one");
-  		//controls.reset();
-  		camera.fov = 30;
-			camera.position.set(1149.8830275661012, 531.6122496479234, 505.4931375393053);
+			console.log("camera one");
+			controls.reset();
+			var vFOVRadians = 2 * Math.atan( windowHeight / ( 2 * 35000 ) ),
+					fov = vFOVRadians * 180 / Math.PI;
+			camera.fov = fov;
+			controls.rotateUp(90*Math.PI/180);
+			camera.position.z = startPosition.z* 23;
+			camera.far = 70000;
+			camera.updateProjectionMatrix();
+			render();
   	}
 
 		if ($(this).attr('id')=="camera-2"){
 			console.log("camera two");
 			controls.reset();
-			camera.fov = 60;
-			camera.position.set(1000,0,0);
-			camera.up = new THREE.Vector3(0,1,0);
-			camera.lookAt(new THREE.Vector3(0,0,0));
+			var vFOVRadians = 2 * Math.atan( windowHeight / ( 2 * 35000 ) ),
+					fov = vFOVRadians * 180 / Math.PI;
+			camera.fov = fov;
+			camera.position.z = startPosition.z* 18;
+			camera.far = 70000;
 			camera.updateProjectionMatrix();
+			render();
 		}
 
 		if ($(this).attr('id')=="camera-3"){
   		console.log("camera three");
   		controls.reset();
-  		camera.fov = 60;
+  		camera.fov = 30;
 			camera.updateProjectionMatrix();
-			camera.position.z = 1500;
+			render();
   	}
 
   	if ($(this).attr('id')=="camera-4"){
@@ -454,7 +468,7 @@ function onWindowResize() {
   		controls.reset();
   		camera.fov = 60;
 			camera.updateProjectionMatrix();
-			camera.position.z = 1000;
+			render();
   	}
 
   });
