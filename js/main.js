@@ -24,7 +24,7 @@ var data = {
   }
 };
 
-$.getJSON( "../2005-2015.json", function( data ) {
+$.getJSON( "./js/2005-2015.json", function( data ) {
 	realData = data;
 	init();
 	render();
