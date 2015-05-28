@@ -70,10 +70,10 @@ function makeTextSprite( message, parameters )
 	if ( parameters === undefined ) parameters = {};
 	
 	var fontface = parameters.hasOwnProperty("fontface") ? 
-		parameters["fontface"] : "Arial";
+		parameters["fontface"] : "Helvetica";
 	
 	var fontsize = parameters.hasOwnProperty("fontsize") ? 
-		parameters["fontsize"] : 32;
+		parameters["fontsize"] : 40;
 	
 
 	var canvas = document.createElement('canvas');
